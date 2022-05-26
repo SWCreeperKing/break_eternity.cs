@@ -15,7 +15,9 @@ public class Tester
         public void Setup()
         {
             n1 = 10000;
-            n2 = "1e50";
+            // n2 = "1e50";
+            n2 = new Eternity(1, 50);
+            Console.WriteLine(n2);
         }
 
         [Test]
@@ -46,8 +48,11 @@ public class Tester
         [Test]
         public void AddTest()
         {
+            Console.WriteLine(n1 + n2);
+            Console.WriteLine(new Eternity(1, 50));
             Assert.True(n1 + n2 == new Eternity(1, 50));
-            var preAdd = new Eternity("1e30") + "6e29";
+            var prepreadd = new Eternity("1e30");
+            var preAdd = prepreadd + "6e29";
             var addRes = new Eternity(1.6f, 30);
             Assert.True(preAdd == addRes);
         }

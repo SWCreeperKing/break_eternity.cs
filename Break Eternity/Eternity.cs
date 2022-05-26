@@ -390,7 +390,7 @@ public class Eternity
     public Eternity()
     {
     }
-    
+
     public Eternity(int sign, long layer, double magnitude, bool normalize = true)
     {
         if (normalize) FromComponents(sign, layer, magnitude);
@@ -437,10 +437,10 @@ public class Eternity
     public static bool operator <=(Eternity d1, Eternity d2) => Lte(d1, d2);
 
     public static Eternity operator -(Eternity d) => Neg(d);
-    public static Eternity operator +(Eternity d1, Eternity d2) => Add(d1, d2);
-    public static Eternity operator -(Eternity d1, Eternity d2) => Sub(d1, d2);
-    public static Eternity operator *(Eternity d1, Eternity d2) => Mul(d1, d2);
-    public static Eternity operator /(Eternity d1, Eternity d2) => Div(d1, d2);
+    public static Eternity operator +(Eternity d1, Eternity d2) => d1.Add(d2);
+    public static Eternity operator -(Eternity d1, Eternity d2) => d1.Sub(d2);
+    public static Eternity operator *(Eternity d1, Eternity d2) => d1.Mul(d2);
+    public static Eternity operator /(Eternity d1, Eternity d2) => d1.Div(d2);
     public static Eternity operator ++(Eternity d) => Add(d, 1);
     public static Eternity operator --(Eternity d) => Sub(d, 1);
 
@@ -458,7 +458,7 @@ public class Eternity
     public static Eternity Floor(Eternity d) => D(d).Floor();
     public static Eternity Ceil(Eternity d) => D(d).Ceil();
     public static Eternity Trunc(Eternity d) => D(d).Trunc();
-    public static Eternity Add(Eternity d1, Eternity d2) => D(d1).Add(d2);
+    public static Eternity Add(Eternity d1, Eternity d2) => d1.Add(d2);
     public static Eternity Sub(Eternity d1, Eternity d2) => D(d1).Sub(d2);
     public static Eternity Mul(Eternity d1, Eternity d2) => D(d1).Mul(d2);
     public static Eternity Div(Eternity d1, Eternity d2) => D(d1).Div(d2);
@@ -745,9 +745,8 @@ public class Eternity
     public Eternity FromMantissaExponent(double man, double exp)
     {
         _layer = 1;
-        _sign = Math.Sign(M);
-        M = Math.Abs(M);
-        _mag = E + Math.Log10(M);
+        _sign = Math.Sign(man);
+        _mag = exp + Math.Log10(Math.Abs(man));
 
         Normalize();
         return this;
@@ -1022,14 +1021,14 @@ public class Eternity
 
     public Eternity Add(Eternity d)
     {
-        if (!double.IsFinite(_layer)) return D(this);
-        if (!double.IsFinite(d._layer)) return D(d);
-        if (_sign == 0) return D(d);
-        if (d._sign == 0) return D(this);
-        if (_sign == -d._sign && _layer == d._layer && _mag == d._mag) return FC_NN(0, 0, 0);
+        if (!double.IsFinite(_layer)) return this;
+        if (!double.IsFinite(d._layer)) return d;
+        if (_sign == 0) return d;
+        if (d._sign == 0) return this;
+        if (_sign == -d._sign && _layer == d._layer && _mag == d._mag) return Zero;
+        if (_layer >= 2 || d._layer >= 2) return AbsMax(d);
 
         Eternity a, b;
-        if (_layer >= 2 || d._layer >= 2) return AbsMax(d);
         if (d.CmpAbs(this) > 0)
         {
             a = this;
@@ -1045,25 +1044,25 @@ public class Eternity
         double layera = a._layer * Math.Sign(a._mag);
         double layerb = b._layer * Math.Sign(b._mag);
 
-        if (layera - layerb >= 2) return D(a);
+        if (layera - layerb >= 2) return a;
 
         double mantissa;
         double magdiff;
         switch (layera)
         {
             case 0 when layerb == -1:
-                if (Math.Abs(b._mag - Math.Log10(a._mag)) > MaxSignificantDigits) return D(a);
+                if (Math.Abs(b._mag - Math.Log10(a._mag)) > MaxSignificantDigits) return a;
                 magdiff = Math.Pow(10, Math.Log10(a._mag) - b._mag);
                 mantissa = b._sign + a._sign * magdiff;
                 return FC(Math.Sign(mantissa), 1, b._mag + Math.Log10(Math.Abs(mantissa)));
             case 1 when layerb == 0:
-                if (Math.Abs(a._mag - Math.Log10(b._mag)) > MaxSignificantDigits) return D(a);
+                if (Math.Abs(a._mag - Math.Log10(b._mag)) > MaxSignificantDigits) return a;
                 magdiff = Math.Pow(10, a._mag - Math.Log10(b._mag));
                 mantissa = b._sign + a._sign * magdiff;
                 return FC(Math.Sign(mantissa), 1, Math.Log10(b._mag) + Math.Log10(Math.Abs(mantissa)));
         }
 
-        if (Math.Abs(a._mag - b._mag) > MaxSignificantDigits) return D(a);
+        if (Math.Abs(a._mag - b._mag) > MaxSignificantDigits) return a;
         magdiff = Math.Pow(10, a._mag - b._mag);
         mantissa = b._sign + a._sign * magdiff;
         return FC(Math.Sign(mantissa), 1, b._mag + Math.Log10(Math.Abs(mantissa)));
