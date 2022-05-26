@@ -1,4 +1,4 @@
-namespace WasmTree.Data.Technical
+namespace Dec
 {
     public class Dec
     {
